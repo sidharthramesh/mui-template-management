@@ -1,10 +1,8 @@
 from fastapi.params import Depends
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql.functions import mode
-from database import SessionLocal, engine
-from typing import List, Optional
+from database import SessionLocal
+from typing import List
 from fastapi import FastAPI
-
 import schemas
 import models
 
@@ -123,7 +121,7 @@ async def get_configuration(id: int, db: Session = Depends(get_db)):
     tags=["configuration"],
 )
 async def update_configuration(
-    id:int, config: schemas.ConfigurationIn, db: Session = Depends(get_db)
+    id: int, config: schemas.ConfigurationIn, db: Session = Depends(get_db)
 ):
     db_config = db.query(models.Configuration).get(id)
     db_config.data = config.data
