@@ -1,4 +1,5 @@
 from fastapi.params import Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm.session import Session
 from database import SessionLocal
 from typing import List
@@ -20,7 +21,13 @@ app = FastAPI(
     version="0.0.1",
     openapi_tags=[],
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/form", response_model=List[schemas.FormOut], tags=["form"])
 async def get_forms(db: Session = Depends(get_db)):
@@ -45,12 +52,20 @@ async def create_form(form: schemas.FormPost, db: Session = Depends(get_db)):
 async def update_form(id: int, form: schemas.FormPut, db: Session = Depends(get_db)):
     db_form = db.query(models.Form).get(id)
     db_form.name = form.name
-    db_form.template_id = form.template_id
-    db_form.configuration_id = form.configuration_id
+    if form.template_id:
+        db_form.template_id = form.template_id
+    if form.configuration_id:
+        db_form.configuration_id = form.configuration_id
     db.commit()
     db.refresh(db_form)
     return db_form
 
+@app.delete("/form/{id}", tags=["form"])
+async def get_form(id: int, db: Session = Depends(get_db)):
+    db_form = db.query(models.Form).get(id)
+    db.delete(db_form)
+    db.commit()
+    return {"id": id}
 
 @app.post(
     "/form/{form_id}/template",
